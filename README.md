@@ -8,7 +8,6 @@ Standalone HTML-tool die de levenscyclus-uitstoot van een dieseltruck vergelijkt
 
 - `index.html` — self-contained tool (HTML + inline CSS + inline JS + inline beeldmerk-SVG). Geen build-stap nodig.
 - `etruck-academy-factors.json` — CO₂-emissiefactoren, export uit [`@nts/params`](../nts-parameters-db). Tool fetcht dit bij laden met fallback op ingebouwde waarden.
-- `build-data-uri.js` — legacy Huddle-srcdoc-embed builder. Sinds we via GitHub Pages hosten niet meer nodig, maar bewaard voor historische referentie.
 
 ## Factoren updaten (±1× per jaar)
 

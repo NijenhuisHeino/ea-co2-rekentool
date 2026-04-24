@@ -787,7 +787,8 @@
       <h3 id="assumptions-title">Aannames</h3>
       <ul>
         <li>Diesel betreft <strong>B7 wegdiesel</strong> (tot 7% biodiesel).</li>
-        <li>Stroom­factor betreft de <strong>Nederlandse netmix</strong>; er wordt geen TtW-onderscheid voor stroom gemaakt — alle uitstoot ontstaat bij opwekking.</li>
+        <li>Stroomfactor <strong>Well-to-Wheel</strong>: Nederlandse netmix (volledige opwek-uitstoot).</li>
+        <li>Stroomfactor <strong>Tank-to-Wheel</strong>: 0 kg CO₂/kWh — een eTruck heeft geen uitlaat, directe uitstoot is nul.</li>
         <li>Energie-equivalent van <strong>5,4 kWh per liter diesel</strong> is een vaste aanname voor het dieselverbruik vertaald naar het eTruck-stroomverbruik.</li>
         <li>Regeneratie is gemaximeerd op <strong>30%</strong>.</li>
         <li>Productie-uitstoot volgt de Scania Life Cycle Assessment-publicatie voor distributie­voertuigen.</li>
@@ -858,8 +859,11 @@
         gridCO2PerKWh: src.co2.stroomNL.factor
       },
       ttw: {
+        // Tank-to-Wheel = directe uitstoot bij het voertuig zelf.
+        // Een eTruck heeft geen uitlaat — dus 0 kg CO2 per kWh.
+        // Opwek-uitstoot van de netmix hoort bij Well-to-Wheel.
         dieselCO2PerL: src.co2.dieselB7.ttw,
-        gridCO2PerKWh: src.co2.stroomNL.factor // geen TtW voor stroom
+        gridCO2PerKWh: 0
       },
       kWhPerLEquiv:     src.conversie.kwhPerLDieselEquivalent,
       regenMaxPct:      src.conversie.regenMaxPct,
@@ -958,14 +962,17 @@
 
   function calc() {
     const dieselL  = Math.max(0, num(inputs.dieselL));
-    const kmPerL   = Math.max(0.0001, num(inputs.kmPerL));
+    const kmPerL   = Math.max(0, num(inputs.kmPerL));
     const regenPct = Math.min(FACTORS.regenMaxPct, Math.max(0, num(inputs.regen)));
     const battKwh  = Math.max(0, num(inputs.battKwh));
 
     const kWh         = dieselL * FACTORS.kWhPerLEquiv * (1 - regenPct / 100);
     const refKm       = dieselL * kmPerL;
-    const dieselPerKm = dieselL / refKm;
-    const kwhPerKm    = refKm > 0 ? kWh / refKm : 0;
+    // Bij ontbrekende of nul-invoer: NaN cascadet door alle afgeleide
+    // waarden en fmt() toont '–'. Beter dan stilletjes met een
+    // kunstmatige noemer rekenen.
+    const dieselPerKm = refKm > 0 ? dieselL / refKm : NaN;
+    const kwhPerKm    = refKm > 0 ? kWh / refKm     : NaN;
 
     const f = factors();
     const co2DieselKm = dieselPerKm * f.dieselCO2PerL;
@@ -1040,6 +1047,19 @@
       for (const k in attrs) e.setAttribute(k, attrs[k]);
       return e;
     };
+
+    // Bij ongeldige input (bijv. km/L ontbreekt): lege grafiek met
+    // placeholder-tekst in plaats van asielabels met "NaN".
+    if (!isFinite(r.co2DieselKm) || !isFinite(r.co2ETruckKm)) {
+      const t = el('text', {
+        x: W / 2, y: padT + ih / 2,
+        'text-anchor': 'middle', 'font-size': 13, fill: '#7b7886',
+        'font-family': "'Titillium Web', sans-serif"
+      });
+      t.textContent = 'Vul alle invoervelden in om de grafiek te tonen.';
+      svg.appendChild(t);
+      return;
+    }
 
     let maxKm;
     if (isFinite(r.breakEven) && r.breakEven > 0) {
