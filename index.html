@@ -599,6 +599,15 @@
               </div>
               <span class="helper">Aandeel van het verbruik dat via regeneratie wordt teruggewonnen. Maximaal 30%.</span>
             </label>
+
+            <label>
+              <span class="lbl">Batterijcapaciteit</span>
+              <div class="input-row">
+                <input id="battKwh" type="number" min="0" step="any" value="600" inputmode="decimal" />
+                <span class="unit">kWh</span>
+              </div>
+              <span class="helper">Totale capaciteit van het batterijpakket. Bepaalt de productie-uitstoot van de eTruck.</span>
+            </label>
           </fieldset>
 
           <fieldset>
@@ -731,22 +740,22 @@
           <div class="calc-row">
             <div class="calc-label-group">
               <span class="calc-label">Batterij­pakket</span>
-              <span class="calc-sub">600 kWh × 74 kg CO₂/kWh</span>
+              <span class="calc-sub" id="battery-sub">–</span>
             </div>
-            <div class="calc-value">44.400<small>kg CO₂</small></div>
+            <div class="calc-value" id="battery-kg">–<small>kg CO₂</small></div>
           </div>
           <div class="calc-row">
             <div class="calc-label-group">
               <span class="calc-label">Totaal productie eTruck</span>
             </div>
-            <div class="calc-value">72.430<small>kg CO₂</small></div>
+            <div class="calc-value" id="total-prod-etruck">–<small>kg CO₂</small></div>
           </div>
           <div class="calc-row">
             <div class="calc-label-group">
               <span class="calc-label">Extra productie-uitstoot eTruck</span>
               <span class="calc-sub">ten opzichte van dieseltruck</span>
             </div>
-            <div class="calc-value">48.280<small>kg CO₂</small></div>
+            <div class="calc-value" id="extra-prod-etruck">–<small>kg CO₂</small></div>
           </div>
 
           <div class="calc-row calc-total">
@@ -910,8 +919,8 @@
   }
 
   const $ = (id) => document.getElementById(id);
-  const inputs = { dieselL: $('dieselL'), kmPerL: $('kmPerL'), regen: $('regen') };
-  const defaults = { dieselL: 100, kmPerL: 4, regen: 20, mode: 'wtw' };
+  const inputs = { dieselL: $('dieselL'), kmPerL: $('kmPerL'), regen: $('regen'), battKwh: $('battKwh') };
+  const defaults = { dieselL: 100, kmPerL: 4, regen: 20, battKwh: 600, mode: 'wtw' };
   let mode = 'wtw';
 
   const fmt = (n, d = 0) => isFinite(n)
@@ -951,6 +960,7 @@
     const dieselL  = Math.max(0, num(inputs.dieselL));
     const kmPerL   = Math.max(0.0001, num(inputs.kmPerL));
     const regenPct = Math.min(FACTORS.regenMaxPct, Math.max(0, num(inputs.regen)));
+    const battKwh  = Math.max(0, num(inputs.battKwh));
 
     const kWh         = dieselL * FACTORS.kWhPerLEquiv * (1 - regenPct / 100);
     const refKm       = dieselL * kmPerL;
@@ -962,7 +972,8 @@
     const co2ETruckKm = kwhPerKm    * f.gridCO2PerKWh;
     const co2DiffKm   = co2DieselKm - co2ETruckKm;
 
-    const prodETruckTotal = FACTORS.prodETruckBase + FACTORS.batteryCO2PerKWh * FACTORS.batteryKWh;
+    const batteryCO2      = battKwh * FACTORS.batteryCO2PerKWh;
+    const prodETruckTotal = FACTORS.prodETruckBase + batteryCO2;
     const prodDiff        = prodETruckTotal - FACTORS.prodDiesel;
 
     const breakEven = co2DiffKm > 0 ? prodDiff / co2DiffKm : Infinity;
@@ -971,7 +982,7 @@
     return {
       kWh, refKm, dieselPerKm, kwhPerKm,
       co2DieselKm, co2ETruckKm, co2DiffKm,
-      prodETruckTotal, prodDiff, breakEven, netAt200k,
+      battKwh, batteryCO2, prodETruckTotal, prodDiff, breakEven, netAt200k,
       f
     };
   }
@@ -993,6 +1004,12 @@
     $('co2-diesel-km').innerHTML = `${fmt(r.co2DieselKm, 3)}<small>kg CO₂/km</small>`;
     $('co2-etruck-km').innerHTML = `${fmt(r.co2ETruckKm, 3)}<small>kg CO₂/km</small>`;
     $('co2-diff-km').innerHTML   = `${fmt(r.co2DiffKm, 3)}<small>kg CO₂/km</small>`;
+
+    // Productie-uitstoot (afhankelijk van batterijcapaciteit)
+    $('battery-sub').textContent = `${fmt(r.battKwh, 0)} kWh × ${FACTORS.batteryCO2PerKWh} kg CO₂/kWh`;
+    $('battery-kg').innerHTML       = `${fmt(r.batteryCO2, 0)}<small>kg CO₂</small>`;
+    $('total-prod-etruck').innerHTML = `${fmt(r.prodETruckTotal, 0)}<small>kg CO₂</small>`;
+    $('extra-prod-etruck').innerHTML = `${fmt(r.prodDiff, 0)}<small>kg CO₂</small>`;
 
     // Break-even
     const beTxt = isFinite(r.breakEven)
