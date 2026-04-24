@@ -1,0 +1,30 @@
+{
+  "_generated": "2026-04-24T18:55:45.146Z",
+  "_bron": "@nts/params",
+  "_versie": "0.1.0",
+  "_notitie": "Publieke factoren voor eTruck Academy rekentools. Zie bron-velden voor provenance.",
+  "jaar": 2026,
+  "co2": {
+    "dieselB7": {
+      "wtw": 3.251,
+      "ttw": 2.67,
+      "wtwBron": "co2emissiefactoren.nl — diesel B7 Well-to-Wheel, gepubliceerd 2025-09",
+      "ttwBron": "co2emissiefactoren.nl — diesel B7 Tank-to-Wheel"
+    },
+    "stroomNL": {
+      "factor": 0.268,
+      "bron": "co2emissiefactoren.nl — elektriciteit NL, gepubliceerd 2025-11"
+    }
+  },
+  "lca": {
+    "prodDieselKg": 24150,
+    "prodETruckBaseKg": 28030,
+    "batteryCO2PerKwhKg": 74,
+    "batteryKwh": 600,
+    "bron": "Scania Life Cycle Assessment of distribution vehicles"
+  },
+  "conversie": {
+    "kwhPerLDieselEquivalent": 5.4,
+    "regenMaxPct": 30
+  }
+}
