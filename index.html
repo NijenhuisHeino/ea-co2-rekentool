@@ -217,27 +217,36 @@
     margin: 0; color: var(--eta-text-subtle);
     font-size: 0.95rem;
   }
-  .panel-heading-row {
+  /* Export-bar onderaan de tool */
+  .export-bar {
+    margin-top: 32px;
+    padding: 24px;
+    border: 1px solid var(--eta-border-soft);
+    border-radius: var(--eta-radius-xl);
+    background: var(--eta-bg-card);
+    box-shadow: var(--eta-shadow-soft);
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
   }
-  .panel-heading-row > div { flex: 1 1 240px; }
-  .export-pdf-btn { flex: 0 0 auto; }
+  .export-bar .export-pdf-btn { min-width: 240px; }
+  .export-hint {
+    margin: 0;
+    color: var(--eta-text-subtle);
+    font-size: 0.88rem;
+  }
+  .export-hint strong { color: var(--eta-purple-900); }
   @media (max-width: 639px) {
-    .export-pdf-btn { width: 100%; }
+    .export-bar .export-pdf-btn { width: 100%; }
   }
 
   /* Print-only elements */
   .print-only { display: none; }
-  .print-header h1 {
-    font-size: 18pt; margin: 0 0 4px;
-    color: var(--eta-purple-900);
-  }
-  .print-header .print-stamp {
-    margin: 0; color: var(--eta-text-subtle);
+  .print-stamp {
+    margin: 14px 0 0;
+    color: rgba(255, 255, 255, 0.78);
     font-size: 10pt;
   }
 
@@ -546,82 +555,102 @@
      Print-stylesheet: zorgt dat de tool als nette PDF exporteert.
      ============================================================ */
   @media print {
-    @page { size: A4; margin: 14mm; }
+    @page { size: A4; margin: 12mm; }
 
     html, body { background: #fff; }
-    body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    body {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+      font-size: 10pt;
+    }
 
-    .page-shell { width: 100%; padding: 0; }
+    .page-shell { width: 100%; padding: 0; max-width: none; }
 
-    .no-print, .data-provenance, .input-actions { display: none !important; }
+    /* Verbergen — niet relevant op papier */
+    .no-print,
+    .data-provenance,
+    .input-actions,
+    .hero-pills,
+    .export-bar { display: none !important; }
+    .segmented button[aria-pressed="false"] { display: none; }
 
     .print-only { display: block; }
-    .print-header { margin-bottom: 12px; }
 
-    /* Hero compacter en zonder zware gradient (toner-vriendelijk) */
+    /* HERO — paarse gradient blijft (matcht de tool). Compactere padding
+       zodat hero + KPI samen op pagina 1 passen naast het invoer-blok. */
     .hero {
-      grid-template-columns: 1fr;
-      gap: 8px;
-      margin-bottom: 12px;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+      page-break-inside: avoid;
       page-break-after: avoid;
     }
     .hero-copy {
-      background: #fff;
-      color: var(--eta-purple-900);
+      padding: 18px 20px;
       box-shadow: none;
-      padding: 0;
     }
     .hero-copy::after { display: none; }
-    .hero-copy h1 { color: var(--eta-purple-900); font-size: 16pt; max-width: 100%; }
-    .hero-copy .lead { color: var(--eta-text-subtle); font-size: 10pt; }
-    .hero-pills, .brand-lockup { display: none; }
+    .hero-copy h1 { font-size: 18pt; max-width: 100%; margin-bottom: 6px; }
+    .hero-copy .lead { font-size: 10pt; margin-top: 8px; }
+    .brand-lockup { margin-bottom: 12px; }
+    .brand-logo { width: 44px; height: 44px; padding: 5px; }
 
     .hero-kpi {
-      background: var(--eta-yellow-500);
+      padding: 16px 18px;
       box-shadow: none;
-      padding: 14px 18px;
       page-break-inside: avoid;
     }
-    .hero-kpi-value { font-size: 26pt; }
+    .hero-kpi-label { font-size: 9pt; }
+    .hero-kpi-value { font-size: 28pt; margin: 6px 0 2px; }
+    .hero-kpi-unit { font-size: 10pt; }
+    .hero-kpi-hint { font-size: 8.5pt; margin-top: 8px; }
 
-    /* Layout alles onder elkaar voor A4 */
+    /* LAYOUT — alles onder elkaar op A4 */
     .layout { grid-template-columns: 1fr; gap: 12px; }
+
+    /* PANELS — behoud merkstijl (afgeronde witte cards) maar zonder shadow */
     .panel, .calc-card, .chart-card, .assumptions {
       box-shadow: none;
       page-break-inside: avoid;
     }
-    .input-panel, .results-panel {
-      border: 1px solid var(--eta-border-soft);
-    }
+    .panel { padding: 16px 18px; }
 
-    /* Inputs in print: niet bewerkbaar tonen, geen border-glows */
-    .input-row { box-shadow: none; }
-    .segmented button[aria-pressed="true"] { background: var(--eta-purple-900); color: #fff; }
-    .segmented button[aria-pressed="false"] { display: none; }
+    /* PAGE BREAKS — vaste structuur:
+       Pagina 1: Hero + Hero-KPI + Invoer
+       Pagina 2: Resultaat-panel (KPI's + breakdown)
+       Pagina 3: Grafiek + Aannamen + Bronnen */
+    .results-panel { page-break-before: always; }
+    .chart-card { page-break-before: always; }
 
-    /* Detail KPI-cards op één rij houden */
+    /* RESULTATEN — KPI's + breakdown bij elkaar houden */
     .detail-cards {
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      gap: 10px;
     }
+    .detail-card { padding: 12px 14px; }
+    .detail-card .kpi-value { font-size: 16pt; }
+    .calc-card { margin-top: 14px; }
+    .calc-row { padding: 8px 0; }
+    .calc-row .calc-value { font-size: 11pt; }
+    .calc-row.calc-total .calc-value { font-size: 14pt; }
 
-    /* Grafiek hoogte beperken zodat die op A4 past */
-    svg.chart { height: 220px; }
+    /* GRAFIEK — beperk hoogte zodat die op A4 past */
+    svg.chart { height: 240px; }
 
-    /* Sectiebreaks netjes */
-    .chart-card, .assumptions, .sources { page-break-before: auto; }
-    .sources, .brand-footer { font-size: 9pt; }
+    /* AANNAMEN + BRONNEN */
+    .assumptions { padding: 14px 18px; }
+    .assumptions ul { font-size: 9.5pt; }
+    .sources { font-size: 9pt; padding-top: 14px; margin-top: 18px; }
+    .brand-footer { font-size: 8.5pt; margin-top: 10px; }
+
+    /* Inputs in print: rust en geen focus-glows */
+    .input-row { box-shadow: none; }
+    .input-row input[type="number"] { -webkit-appearance: none; }
   }
 </style>
 </head>
 <body>
   <div class="page-shell">
-
-    <!-- Print-only header — alleen zichtbaar in print/PDF -->
-    <header class="print-only print-header">
-      <h1>CO₂-reductie rekentool — eTruck Academy®</h1>
-      <p class="print-stamp" id="print-stamp">–</p>
-    </header>
 
     <!-- HERO -->
     <header class="hero">
@@ -644,6 +673,7 @@
           <span>Inclusief productie-uitstoot</span>
         </div>
         <p class="data-provenance" id="data-provenance" aria-live="polite">Data-bron wordt geladen…</p>
+        <p class="print-only print-stamp" id="print-stamp">–</p>
       </div>
 
       <aside class="hero-kpi" aria-live="polite">
@@ -731,14 +761,9 @@
 
       <!-- RESULTS -->
       <section class="panel results-panel" aria-labelledby="results-title">
-        <div class="panel-heading panel-heading-row">
-          <div>
-            <h2 id="results-title">Resultaat</h2>
-            <p>Netto hoofduitkomst eerst, daaronder de bouwstenen van de berekening.</p>
-          </div>
-          <button type="button" class="btn btn-primary export-pdf-btn no-print" id="exportPdfBtn" title="Print of bewaar als PDF">
-            Exporteer als PDF
-          </button>
+        <div class="panel-heading">
+          <h2 id="results-title">Resultaat</h2>
+          <p>Netto hoofduitkomst eerst, daaronder de bouwstenen van de berekening.</p>
         </div>
 
         <!-- KPI overview -->
@@ -910,6 +935,13 @@
       <a href="https://www.scania.com/content/dam/group/press-and-media/press-releases/documents/Scania-Life-cycle-assessment-of-distribution-vehicles.pdf" target="_blank" rel="noopener">Scania Life Cycle Assessment of distribution vehicles (PDF)</a>.
       De centrale parameter­bron is <strong>@nts/params</strong>; waarden worden jaarlijks herzien.
     </footer>
+
+    <div class="export-bar no-print">
+      <button type="button" class="btn btn-primary export-pdf-btn" id="exportPdfBtn" title="Print of bewaar als PDF">
+        Exporteer als PDF
+      </button>
+      <p class="export-hint">Opent het print-dialoog. Kies <strong>Bewaar als PDF</strong> om een rapport van dit scenario op te slaan.</p>
+    </div>
 
     <div class="brand-footer">
       <strong>eTruck Academy®</strong> · CO₂-reductie rekentool
