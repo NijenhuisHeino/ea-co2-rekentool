@@ -217,6 +217,29 @@
     margin: 0; color: var(--eta-text-subtle);
     font-size: 0.95rem;
   }
+  .panel-heading-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .panel-heading-row > div { flex: 1 1 240px; }
+  .export-pdf-btn { flex: 0 0 auto; }
+  @media (max-width: 639px) {
+    .export-pdf-btn { width: 100%; }
+  }
+
+  /* Print-only elements */
+  .print-only { display: none; }
+  .print-header h1 {
+    font-size: 18pt; margin: 0 0 4px;
+    color: var(--eta-purple-900);
+  }
+  .print-header .print-stamp {
+    margin: 0; color: var(--eta-text-subtle);
+    font-size: 10pt;
+  }
 
   /* ------------ Form ------------ */
   .form-grid { display: grid; gap: 16px; margin-top: 20px; }
@@ -518,10 +541,87 @@
     .panel { padding: 20px; }
     .btn { width: 100%; }
   }
+
+  /* ============================================================
+     Print-stylesheet: zorgt dat de tool als nette PDF exporteert.
+     ============================================================ */
+  @media print {
+    @page { size: A4; margin: 14mm; }
+
+    html, body { background: #fff; }
+    body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+
+    .page-shell { width: 100%; padding: 0; }
+
+    .no-print, .data-provenance, .input-actions { display: none !important; }
+
+    .print-only { display: block; }
+    .print-header { margin-bottom: 12px; }
+
+    /* Hero compacter en zonder zware gradient (toner-vriendelijk) */
+    .hero {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+      page-break-after: avoid;
+    }
+    .hero-copy {
+      background: #fff;
+      color: var(--eta-purple-900);
+      box-shadow: none;
+      padding: 0;
+    }
+    .hero-copy::after { display: none; }
+    .hero-copy h1 { color: var(--eta-purple-900); font-size: 16pt; max-width: 100%; }
+    .hero-copy .lead { color: var(--eta-text-subtle); font-size: 10pt; }
+    .hero-pills, .brand-lockup { display: none; }
+
+    .hero-kpi {
+      background: var(--eta-yellow-500);
+      box-shadow: none;
+      padding: 14px 18px;
+      page-break-inside: avoid;
+    }
+    .hero-kpi-value { font-size: 26pt; }
+
+    /* Layout alles onder elkaar voor A4 */
+    .layout { grid-template-columns: 1fr; gap: 12px; }
+    .panel, .calc-card, .chart-card, .assumptions {
+      box-shadow: none;
+      page-break-inside: avoid;
+    }
+    .input-panel, .results-panel {
+      border: 1px solid var(--eta-border-soft);
+    }
+
+    /* Inputs in print: niet bewerkbaar tonen, geen border-glows */
+    .input-row { box-shadow: none; }
+    .segmented button[aria-pressed="true"] { background: var(--eta-purple-900); color: #fff; }
+    .segmented button[aria-pressed="false"] { display: none; }
+
+    /* Detail KPI-cards op één rij houden */
+    .detail-cards {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    /* Grafiek hoogte beperken zodat die op A4 past */
+    svg.chart { height: 220px; }
+
+    /* Sectiebreaks netjes */
+    .chart-card, .assumptions, .sources { page-break-before: auto; }
+    .sources, .brand-footer { font-size: 9pt; }
+  }
 </style>
 </head>
 <body>
   <div class="page-shell">
+
+    <!-- Print-only header — alleen zichtbaar in print/PDF -->
+    <header class="print-only print-header">
+      <h1>CO₂-reductie rekentool — eTruck Academy®</h1>
+      <p class="print-stamp" id="print-stamp">–</p>
+    </header>
 
     <!-- HERO -->
     <header class="hero">
@@ -631,9 +731,14 @@
 
       <!-- RESULTS -->
       <section class="panel results-panel" aria-labelledby="results-title">
-        <div class="panel-heading">
-          <h2 id="results-title">Resultaat</h2>
-          <p>Netto hoofduitkomst eerst, daaronder de bouwstenen van de berekening.</p>
+        <div class="panel-heading panel-heading-row">
+          <div>
+            <h2 id="results-title">Resultaat</h2>
+            <p>Netto hoofduitkomst eerst, daaronder de bouwstenen van de berekening.</p>
+          </div>
+          <button type="button" class="btn btn-primary export-pdf-btn no-print" id="exportPdfBtn" title="Print of bewaar als PDF">
+            Exporteer als PDF
+          </button>
         </div>
 
         <!-- KPI overview -->
@@ -1169,12 +1274,42 @@
     inputs.dieselL.value = defaults.dieselL;
     inputs.kmPerL.value  = defaults.kmPerL;
     inputs.regen.value   = defaults.regen;
+    inputs.battKwh.value = defaults.battKwh;
     setMode(defaults.mode);
   });
+
+  // Print-stamp: datum + scenario in print-only header zetten
+  function updatePrintStamp() {
+    const el = $('print-stamp');
+    if (!el) return;
+    const now = new Date();
+    const dateTxt = now.toLocaleDateString('nl-NL',
+      { day: '2-digit', month: 'long', year: 'numeric' });
+    const timeTxt = now.toLocaleTimeString('nl-NL',
+      { hour: '2-digit', minute: '2-digit' });
+    const scenario = [
+      `${inputs.dieselL.value} L diesel`,
+      `${inputs.kmPerL.value} km/L`,
+      `${inputs.regen.value}% regen`,
+      `${inputs.battKwh.value} kWh batterij`,
+      mode === 'wtw' ? 'WtW' : 'TtW'
+    ].join(' · ');
+    el.textContent = `Geprint op ${dateTxt} ${timeTxt} · scenario: ${scenario}`;
+  }
+
+  // Export-knop → print-dialoog (gebruiker kiest "Bewaar als PDF")
+  $('exportPdfBtn').addEventListener('click', () => {
+    updatePrintStamp();
+    window.print();
+  });
+
+  // Vóór een browser-initiated print (Cmd+P) ook stempel verversen
+  window.addEventListener('beforeprint', updatePrintStamp);
 
   // Eerst render met fallback (direct begrip, geen layoutshift),
   // daarna async live data ophalen vanaf NTS params op GitHub.
   updateProvenance(false);
+  updatePrintStamp();
   render();
   loadFactors();
 })();
