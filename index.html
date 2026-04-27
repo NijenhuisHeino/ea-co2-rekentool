@@ -566,18 +566,27 @@
 
     .page-shell { width: 100%; padding: 0; max-width: none; }
 
-    /* Verbergen — niet relevant op papier */
+    /* Verbergen op print — duplicate / niet-essentieel voor het rapport */
     .no-print,
     .data-provenance,
     .input-actions,
     .hero-pills,
+    .detail-cards,         /* KPI summary is duplicaat van de breakdown */
+    .assumptions,          /* aannames context, niet kerncijfers */
     .export-bar { display: none !important; }
     .segmented button[aria-pressed="false"] { display: none; }
 
     .print-only { display: block; }
 
-    /* HERO — paarse gradient blijft (matcht de tool). Compactere padding
-       zodat hero + KPI samen op pagina 1 passen naast het invoer-blok. */
+    /* ========= PAGINA-INDELING =========
+       Vaste 2-pagina-structuur:
+         Pagina 1: Hero (incl. break-even-tegel) + Invoer-panel
+         Pagina 2: Resultaat-panel (breakdown) + Grafiek + Bronnen
+       ===================================== */
+    .results-panel { page-break-before: always; }
+    .chart-card    { page-break-before: auto; }
+
+    /* HERO — paarse gradient blijft (matcht de tool). */
     .hero {
       grid-template-columns: 1.4fr 1fr;
       gap: 12px;
@@ -592,7 +601,7 @@
     .hero-copy::after { display: none; }
     .hero-copy h1 { font-size: 18pt; max-width: 100%; margin-bottom: 6px; }
     .hero-copy .lead { font-size: 10pt; margin-top: 8px; }
-    .brand-lockup { margin-bottom: 12px; }
+    .brand-lockup { margin-bottom: 10px; }
     .brand-logo { width: 44px; height: 44px; padding: 5px; }
 
     .hero-kpi {
@@ -608,44 +617,65 @@
     /* LAYOUT — alles onder elkaar op A4 */
     .layout { grid-template-columns: 1fr; gap: 12px; }
 
-    /* PANELS — behoud merkstijl (afgeronde witte cards) maar zonder shadow */
-    .panel, .calc-card, .chart-card, .assumptions {
-      box-shadow: none;
+    /* PANELS */
+    .panel, .calc-card, .chart-card { box-shadow: none; }
+    .panel { padding: 14px 16px; }
+
+    /* INVOER — fieldsets compacter zodat hero+invoer op pagina 1 passen */
+    fieldset { padding: 12px 14px; page-break-inside: avoid; }
+    label { margin-top: 10px; }
+    label .helper { font-size: 8.5pt; }
+
+    /* RESULTAAT — paneel mag NIET in z'n geheel doorbreken; rijen wel
+       per stuk, maar nooit een sectie-kopje los van zijn rijen. */
+    .results-panel { page-break-inside: auto; }
+    .calc-card {
+      page-break-inside: auto;
+      margin-top: 10px;
+      padding: 12px 14px;
+    }
+    .calc-section-label {
+      margin: 8px 0 2px;
+      font-size: 8pt;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+    .calc-row {
+      padding: 5px 0;
       page-break-inside: avoid;
+      break-inside: avoid;
     }
-    .panel { padding: 16px 18px; }
-
-    /* PAGE BREAKS — vaste structuur:
-       Pagina 1: Hero + Hero-KPI + Invoer
-       Pagina 2: Resultaat-panel (KPI's + breakdown)
-       Pagina 3: Grafiek + Aannamen + Bronnen */
-    .results-panel { page-break-before: always; }
-    .chart-card { page-break-before: always; }
-
-    /* RESULTATEN — KPI's + breakdown bij elkaar houden */
-    .detail-cards {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+    .calc-row .calc-label { font-size: 9.5pt; }
+    .calc-row .calc-sub { font-size: 8pt; }
+    .calc-row .calc-value { font-size: 10.5pt; }
+    .calc-row.calc-total {
+      padding-top: 10px;
+      margin-top: 4px;
+      page-break-before: avoid;
     }
-    .detail-card { padding: 12px 14px; }
-    .detail-card .kpi-value { font-size: 16pt; }
-    .calc-card { margin-top: 14px; }
-    .calc-row { padding: 8px 0; }
-    .calc-row .calc-value { font-size: 11pt; }
     .calc-row.calc-total .calc-value { font-size: 14pt; }
 
-    /* GRAFIEK — beperk hoogte zodat die op A4 past */
-    svg.chart { height: 240px; }
+    /* GRAFIEK */
+    .chart-card {
+      padding: 14px 16px 8px;
+      margin-top: 14px;
+      page-break-inside: avoid;
+    }
+    .chart-card h3 { font-size: 11pt; }
+    .chart-card .chart-sub { font-size: 9pt; }
+    svg.chart { height: 180px; }
 
-    /* AANNAMEN + BRONNEN */
-    .assumptions { padding: 14px 18px; }
-    .assumptions ul { font-size: 9.5pt; }
-    .sources { font-size: 9pt; padding-top: 14px; margin-top: 18px; }
-    .brand-footer { font-size: 8.5pt; margin-top: 10px; }
+    /* BRONNEN + FOOTER */
+    .sources {
+      font-size: 8.5pt;
+      padding-top: 12px;
+      margin-top: 14px;
+      page-break-inside: avoid;
+    }
+    .brand-footer { font-size: 8.5pt; margin-top: 8px; }
 
-    /* Inputs in print: rust en geen focus-glows */
+    /* Inputs: geen focus-glows op papier */
     .input-row { box-shadow: none; }
-    .input-row input[type="number"] { -webkit-appearance: none; }
   }
 </style>
 </head>
