@@ -49,4 +49,4 @@ Volledig canonconform volgens `[[FORMAT - eTruck Academy Tool UI (Canon)]]` en `
 - Self-contained HTML/CSS/JS volgens `FORMAT - eTruck Academy Tool UI (Canon)`.
 - Titillium Web, beeldmerk-in-tegel hero, WtW/TtW-toggle, cumulatieve CO₂-grafiek.
 - Live koppeling aan NTS params via `etruck-academy-factors.json` (same-origin fetch met fallback).
-- Gepubliceerd via GitHub Pages: <https://nijenhuisheino.github.io/ea-co2-rekentool/>.
+- Gepubliceerd via GitHub Pages: <https://nijenhuis-truck-solutions-b-v.github.io/ea-co2-rekentool/>.
